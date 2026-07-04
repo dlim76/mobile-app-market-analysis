@@ -1,9 +1,8 @@
 from datetime import date
-
 import pandas as pd
 
 
-def transform_app_data(app: dict) -> dict:
+def transform_app_data(app: dict, snapshote_date) -> dict:
     """
     Преобразует JSON приложения из iTunes API
     в словарь для последующей загрузки в PostgreSQL.
@@ -21,7 +20,7 @@ def transform_app_data(app: dict) -> dict:
         "release_date": app.get("releaseDate"),
 
         # ---------- Таблица app_snapshots ----------
-        "snapshot_date": date.today(),
+        "snapshot_date": snapshote_date,
 
         "average_rating": app.get("averageUserRating"),
         "rating_count": app.get("userRatingCount"),

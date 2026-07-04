@@ -1,6 +1,7 @@
 from pathlib import Path
 from itunes_api import APPS, get_app_data
 from transform import transform_app_data, create_dataframe
+from datetime import date, timedelta
 from database import (
     get_app_id,
     insert_app,
@@ -16,37 +17,37 @@ def main():
 
     rows = []
 
-    for app_name in APPS:
+    simulate_days = 7
 
-        print(f"\n📱 Processing: {app_name}")
+    for day_offset in range(simulate_days):
 
-        # Получаем данные из API
-        app = get_app_data(app_name)
+        snapshot_date = date.today() - timedelta(days=day_offset)
 
-        if app is None:
-            print("❌ Failed to get data")
-            continue
+        print("\n" + "=" * 50)
+        print(f"📅 SNAPSHOT DATE: {snapshot_date}")
+        print("=" * 50)
 
-        print("✅ Data received from API")
+        for app_name in APPS:
 
-        # Преобразуем JSON в словарь
-        app_data = transform_app_data(app)
+            print(f"\n📱 Processing: {app_name}")
 
-        # Добавляем в список для дальнейшего создания DataFrame
-        rows.append(app_data)
+            app = get_app_data(app_name)
 
-        # Проверяем, существует ли приложение в БД
-        app_id = get_app_id(app_data["track_id"])
+            if app is None:
+                continue
 
-        if app_id is None:
-            app_id = insert_app(app_data)
-            print(f"✅ New app added (id={app_id})")
-        else:
-            print(f"App already exists (id={app_id})")
+            app_data = transform_app_data(app, snapshot_date)
 
-        # Сохраняем ежедневный snapshot
-        insert_snapshot(app_id, app_data)
-        print("✅ Snapshot saved")
+            rows.append(app_data)
+
+            app_id = get_app_id(app_data["track_id"])
+
+            if app_id is None:
+                app_id = insert_app(app_data)
+                print("✅ New app inserted")
+
+            insert_snapshot(app_id, app_data)
+            print("📊 Snapshot inserted")
 
     # Создаем DataFrame
     df = create_dataframe(rows)
